@@ -38,7 +38,9 @@ var _ = Describe("Build Test", func() {
 
 	BeforeEach(func() {
 		buildCmd = NewBuildCommand()
-		buildCmd.Run = func(*cobra.Command, []string) {}
+		buildCmd.RunE = func(*cobra.Command, []string) error {
+			return nil
+		}
 	})
 
 	When("No arguments are passed to `build`", func() {
