@@ -13,6 +13,7 @@ import (
 	"github.com/moby/buildkit/util/appdefaults"
 	"github.com/moby/buildkit/util/progress/progressui"
 	"github.com/npitsillos/spinit/errors"
+	"github.com/npitsillos/spinit/helpers"
 	"github.com/tonistiigi/fsutil"
 	"golang.org/x/sync/errgroup"
 )
@@ -25,6 +26,10 @@ type BuildOpt struct {
 	Tag        string
 	Dockerfile string
 	Load       bool
+	Push       bool
+	Export     bool
+	KeepTar    bool
+	ImageType  string
 }
 
 func BuildDockerImage(buildOpts *BuildOpt) error {
@@ -35,6 +40,9 @@ func BuildDockerImage(buildOpts *BuildOpt) error {
 		return err
 	}
 	pipeR, pipeW := io.Pipe()
+
+	defer pipeR.Close()
+
 	solveOpt, err := newSolveOpt(pipeW, buildOpts)
 	if err != nil {
 		return err
@@ -63,10 +71,8 @@ func BuildDockerImage(buildOpts *BuildOpt) error {
 			if err := loadDockerTar(pipeR); err != nil {
 				return err
 			}
-			return pipeR.Close()
+			return nil
 		})
-	} else {
-		pipeR.Close()
 	}
 
 	if err := eg.Wait(); err != nil {
@@ -89,14 +95,19 @@ func newSolveOpt(w io.WriteCloser, buildOpts *BuildOpt) (*client.SolveOpt, error
 	if err != nil {
 		return nil, errors.ErrInvalidDockerfileLocalMount
 	}
+	attrs := map[string]string{
+		"name": fmt.Sprintf("%s:%s", buildOpts.Name, buildOpts.Tag),
+	}
+
+	if buildOpts.Export {
+		attrs["dest"] = fmt.Sprintf("%s/%s.tar", helpers.GetWorkingDir(), buildOpts.Name)
+	}
 
 	return &client.SolveOpt{
 		Exports: []client.ExportEntry{
 			{
-				Type: "docker", // TODO: use containerd image store when it is integrated to Docker
-				Attrs: map[string]string{
-					"name": fmt.Sprintf("%s:%s", buildOpts.Name, buildOpts.Tag),
-				},
+				Type:  buildOpts.ImageType, // TODO: use containerd image store when it is integrated to Docker
+				Attrs: attrs,
 				Output: func(_ map[string]string) (io.WriteCloser, error) {
 					return w, nil
 				},

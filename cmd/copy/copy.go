@@ -1,8 +1,7 @@
 package copy
 
 import (
-	"fmt"
-
+	"github.com/npitsillos/spinit/pkg/copy"
 	"github.com/spf13/cobra"
 )
 
@@ -19,7 +18,7 @@ func NewCopyCommand() *cobra.Command {
 		Args: cobra.MinimumNArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			nodes, _ := cmd.Flags().GetStringArray(NODE_FLAG)
-			fmt.Println(nodes)
+			copy.CopyImageToNodes(args[0], nodes)
 			return nil
 		},
 	}

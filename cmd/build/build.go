@@ -1,7 +1,6 @@
 package build
 
 import (
-	"os"
 	"path/filepath"
 
 	"github.com/npitsillos/spinit/errors"
@@ -16,6 +15,10 @@ var (
 	TAG_FLAG        = "tag"
 	DOCKERFILE_FLAG = "dockerfile"
 	LOAD_FLAG       = "load"
+	PUSH_FLAG       = "push"
+	EXPORT_FLAG     = "export"
+	KEEPTAR_FLAG    = "keep-tar"
+	TYPE_FLAG       = "image-type"
 )
 
 func newBuildOps(dir string, flagSet *pflag.FlagSet) (*build.BuildOpt, error) {
@@ -23,6 +26,10 @@ func newBuildOps(dir string, flagSet *pflag.FlagSet) (*build.BuildOpt, error) {
 	name, _ := flagSet.GetString(NAME_FLAG)
 	tag, _ := flagSet.GetString(TAG_FLAG)
 	load, _ := flagSet.GetBool(LOAD_FLAG)
+	push, _ := flagSet.GetBool(PUSH_FLAG)
+	export, _ := flagSet.GetBool(EXPORT_FLAG)
+	keepTar, _ := flagSet.GetBool(KEEPTAR_FLAG)
+	imageType, _ := flagSet.GetString(TYPE_FLAG)
 
 	return &build.BuildOpt{
 		ProjectDir: dir,
@@ -30,17 +37,16 @@ func newBuildOps(dir string, flagSet *pflag.FlagSet) (*build.BuildOpt, error) {
 		Tag:        tag,
 		Dockerfile: dockerfile,
 		Load:       load,
+		Push:       push,
+		Export:     export,
+		KeepTar:    keepTar,
+		ImageType:  imageType,
 	}, nil
 }
 
 func resolveProjectName(dir string) (string, error) {
 	path, err := filepath.Abs(dir)
 	return filepath.Base(path), err
-}
-
-func getWorkingDir() string {
-	dir, _ := os.Getwd()
-	return filepath.Base(dir)
 }
 
 func resolveDockerFile(path string) (string, error) {
@@ -72,13 +78,17 @@ func NewBuildCommand() *cobra.Command {
 	buildCmd.Flags().StringP(TAG_FLAG, "t", "latest", "Image tag")
 	buildCmd.Flags().StringP(DOCKERFILE_FLAG, "d", "", "Path to dockerfile")
 	buildCmd.Flags().BoolP(LOAD_FLAG, "l", true, "Load image to docker daemon")
+	buildCmd.Flags().StringP(TYPE_FLAG, "T", "docker", "Image type for buildkit opts")
+	buildCmd.Flags().BoolP(PUSH_FLAG, "p", false, "Push image to registry")
+	buildCmd.Flags().BoolP(EXPORT_FLAG, "e", false, "Export image tar")
+	buildCmd.Flags().BoolP(KEEPTAR_FLAG, "k", false, "Keep tar file created by buildkit")
 
 	return buildCmd
 }
 
 func resolveNameAndDockerfile(cmd *cobra.Command, args []string) error {
 	if len(args) == 0 {
-		args = append(args, getWorkingDir())
+		args = append(args, helpers.GetWorkingDir())
 	}
 	nameFlag, _ := cmd.Flags().GetString(NAME_FLAG)
 	if nameFlag == "" {

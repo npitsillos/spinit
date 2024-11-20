@@ -1,18 +1,14 @@
 package root
 
 import (
-	"fmt"
-
 	"github.com/npitsillos/spinit/cmd/build"
+	"github.com/npitsillos/spinit/cmd/config"
 	"github.com/npitsillos/spinit/cmd/copy"
 	"github.com/npitsillos/spinit/cmd/deploy"
-	"github.com/npitsillos/spinit/config"
+	initConfig "github.com/npitsillos/spinit/config"
 	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
 )
-
-func firstRun() (bool, error) {
-	return config.ConfigDirExists()
-}
 
 func NewRootCommand() *cobra.Command {
 	rootCmd := &cobra.Command{
@@ -20,34 +16,31 @@ func NewRootCommand() *cobra.Command {
 		Short:   "spinit helps package and deploy applications to local Kubernetes clusters",
 		Long:    "spinit helps package and deploy applications to local Kubernetes clusters",
 		Version: "0.1.0",
-		RunE:    run,
+		PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
+			configExists, err := initConfig.ConfigDirExists()
+			if err != nil {
+				return err
+			}
+			var cfg *initConfig.Config
+			if !configExists {
+				cfg, err = initConfig.InitSpinitConfig()
+				if err != nil {
+					return err
+				}
+			} else {
+				cfg, err = initConfig.LoadConfig()
+				if err != nil {
+					return err
+				}
+			}
+			viper.Set("config", cfg)
+			return nil
+		},
 	}
 
 	rootCmd.AddCommand(deploy.NewDeployCommand())
 	rootCmd.AddCommand(build.NewBuildCommand())
 	rootCmd.AddCommand(copy.NewCopyCommand())
+	rootCmd.AddCommand(config.NewInitCommand())
 	return rootCmd
-}
-
-func run(cmd *cobra.Command, args []string) error {
-
-	firstRun, err := firstRun()
-	if err != nil {
-		return err
-	}
-	var cfg *config.Config
-	if firstRun {
-		cfg, err = config.InitSpinitConfig()
-		if err != nil {
-			return err
-		}
-	} else {
-		cfg, err = config.LoadConfig()
-		if err != nil {
-			return err
-		}
-	}
-	fmt.Println(cfg.SSH)
-	fmt.Println(cfg.Nodes)
-	return nil
 }

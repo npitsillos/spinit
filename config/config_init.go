@@ -78,7 +78,7 @@ func ConfigDirExists() (bool, error) {
 		return false, err
 	}
 
-	return !helpers.DirectoryExists(spinitRootPath), nil
+	return helpers.DirectoryExists(spinitRootPath), nil
 }
 
 func getConfigDir() (string, error) {
