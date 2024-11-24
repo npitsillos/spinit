@@ -3,8 +3,8 @@ package root
 import (
 	"github.com/npitsillos/spinit/cmd/build"
 	"github.com/npitsillos/spinit/cmd/config"
-	"github.com/npitsillos/spinit/cmd/copy"
 	"github.com/npitsillos/spinit/cmd/deploy"
+	"github.com/npitsillos/spinit/cmd/load"
 	initConfig "github.com/npitsillos/spinit/config"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -40,7 +40,7 @@ func NewRootCommand() *cobra.Command {
 
 	rootCmd.AddCommand(deploy.NewDeployCommand())
 	rootCmd.AddCommand(build.NewBuildCommand())
-	rootCmd.AddCommand(copy.NewCopyCommand())
+	rootCmd.AddCommand(load.NewLoadCommand())
 	rootCmd.AddCommand(config.NewInitCommand())
 	return rootCmd
 }
