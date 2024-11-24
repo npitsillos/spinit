@@ -3,12 +3,11 @@ package build
 import (
 	"context"
 	"fmt"
-	"io"
 	"os"
-	"os/exec"
 	"path/filepath"
 
 	"github.com/moby/buildkit/client"
+	"github.com/moby/buildkit/cmd/buildctl/build"
 	"github.com/moby/buildkit/util/appcontext"
 	"github.com/moby/buildkit/util/appdefaults"
 	"github.com/moby/buildkit/util/progress/progressui"
@@ -17,14 +16,17 @@ import (
 	"golang.org/x/sync/errgroup"
 )
 
-var DOCKERFILE_FRONTEND = "dockerfile.v0"
+var (
+	DOCKERFILE_FRONTEND = "dockerfile.v0"
+	DEFAULT_PLATFORMS   = "platform=linux/amd64,linux/arm64"
+	IMAGE_TYPE          = "oci"
+)
 
 type BuildOpt struct {
 	ProjectDir string
 	Name       string
 	Tag        string
 	Dockerfile string
-	Load       bool
 }
 
 func BuildDockerImage(buildOpts *BuildOpt) error {
@@ -34,8 +36,8 @@ func BuildDockerImage(buildOpts *BuildOpt) error {
 	if err != nil {
 		return err
 	}
-	pipeR, pipeW := io.Pipe()
-	solveOpt, err := newSolveOpt(pipeW, buildOpts)
+
+	solveOpt, err := newSolveOpt(buildOpts)
 	if err != nil {
 		return err
 	}
@@ -58,17 +60,6 @@ func BuildDockerImage(buildOpts *BuildOpt) error {
 		return err
 	})
 
-	if buildOpts.Load {
-		eg.Go(func() error {
-			if err := loadDockerTar(pipeR); err != nil {
-				return err
-			}
-			return pipeR.Close()
-		})
-	} else {
-		pipeR.Close()
-	}
-
 	if err := eg.Wait(); err != nil {
 		return err
 	}
@@ -76,7 +67,7 @@ func BuildDockerImage(buildOpts *BuildOpt) error {
 	return nil
 }
 
-func newSolveOpt(w io.WriteCloser, buildOpts *BuildOpt) (*client.SolveOpt, error) {
+func newSolveOpt(buildOpts *BuildOpt) (*client.SolveOpt, error) {
 
 	file := filepath.Join(buildOpts.ProjectDir, buildOpts.Dockerfile)
 
@@ -90,33 +81,29 @@ func newSolveOpt(w io.WriteCloser, buildOpts *BuildOpt) (*client.SolveOpt, error
 		return nil, errors.ErrInvalidDockerfileLocalMount
 	}
 
+	exportEntry, err := createClientExportEntry(buildOpts)
+	if err != nil {
+		return nil, err
+	}
+
+	frontendAttrs, err := build.ParseOpt([]string{DEFAULT_PLATFORMS})
+	if err != nil {
+		return nil, err
+	}
+	frontendAttrs["filename"] = filepath.Base(file)
+
 	return &client.SolveOpt{
-		Exports: []client.ExportEntry{
-			{
-				Type: "docker", // TODO: use containerd image store when it is integrated to Docker
-				Attrs: map[string]string{
-					"name": fmt.Sprintf("%s:%s", buildOpts.Name, buildOpts.Tag),
-				},
-				Output: func(_ map[string]string) (io.WriteCloser, error) {
-					return w, nil
-				},
-			},
-		},
+		Exports: exportEntry,
 		LocalMounts: map[string]fsutil.FS{
 			"context":    mount,
 			"dockerfile": dockerfileMount,
 		},
-		Frontend: DOCKERFILE_FRONTEND,
-		FrontendAttrs: map[string]string{
-			"filename": filepath.Base(file),
-		},
+		Frontend:      DOCKERFILE_FRONTEND,
+		FrontendAttrs: frontendAttrs,
 	}, nil
 }
 
-func loadDockerTar(r io.Reader) error {
-	cmd := exec.Command("docker", "load")
-	cmd.Stdin = r
-	cmd.Stdout = os.Stdout
-	cmd.Stderr = os.Stderr
-	return cmd.Run()
+func createClientExportEntry(buildOpts *BuildOpt) ([]client.ExportEntry, error) {
+	exports := fmt.Sprintf("type=%s,name=%s,dest=%s.tar", IMAGE_TYPE, buildOpts.Name, buildOpts.Name)
+	return build.ParseOutput([]string{exports})
 }

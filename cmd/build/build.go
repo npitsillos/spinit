@@ -1,7 +1,6 @@
 package build
 
 import (
-	"os"
 	"path/filepath"
 
 	"github.com/npitsillos/spinit/errors"
@@ -15,32 +14,24 @@ var (
 	NAME_FLAG       = "name"
 	TAG_FLAG        = "tag"
 	DOCKERFILE_FLAG = "dockerfile"
-	LOAD_FLAG       = "load"
 )
 
 func newBuildOps(dir string, flagSet *pflag.FlagSet) (*build.BuildOpt, error) {
 	dockerfile, _ := flagSet.GetString(DOCKERFILE_FLAG)
 	name, _ := flagSet.GetString(NAME_FLAG)
 	tag, _ := flagSet.GetString(TAG_FLAG)
-	load, _ := flagSet.GetBool(LOAD_FLAG)
 
 	return &build.BuildOpt{
 		ProjectDir: dir,
 		Name:       name,
 		Tag:        tag,
 		Dockerfile: dockerfile,
-		Load:       load,
 	}, nil
 }
 
 func resolveProjectName(dir string) (string, error) {
 	path, err := filepath.Abs(dir)
 	return filepath.Base(path), err
-}
-
-func getWorkingDir() string {
-	dir, _ := os.Getwd()
-	return filepath.Base(dir)
 }
 
 func resolveDockerFile(path string) (string, error) {
@@ -71,14 +62,13 @@ func NewBuildCommand() *cobra.Command {
 	buildCmd.Flags().StringP(NAME_FLAG, "n", "", "Image name. If not passed this is resolved from the project directory.")
 	buildCmd.Flags().StringP(TAG_FLAG, "t", "latest", "Image tag")
 	buildCmd.Flags().StringP(DOCKERFILE_FLAG, "d", "", "Path to dockerfile")
-	buildCmd.Flags().BoolP(LOAD_FLAG, "l", true, "Load image to docker daemon")
 
 	return buildCmd
 }
 
 func resolveNameAndDockerfile(cmd *cobra.Command, args []string) error {
 	if len(args) == 0 {
-		args = append(args, getWorkingDir())
+		args = append(args, helpers.GetWorkingDir())
 	}
 	nameFlag, _ := cmd.Flags().GetString(NAME_FLAG)
 	if nameFlag == "" {

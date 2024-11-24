@@ -5,8 +5,9 @@ import (
 )
 
 var (
-	ErrNoDockerFile                = errors.New("no Dockerfile found in directory")
-	ErrAccessingHomeDir            = errors.New("can't access home directory")
-	ErrInvalidBuildCtxLocalMount   = errors.New("invalid buildCtx local mount dir")
-	ErrInvalidDockerfileLocalMount = errors.New("invalid dockerfile local mount dir")
+	ErrNoDockerFile                  = errors.New("no Dockerfile found in directory")
+	ErrAccessingHomeDir              = errors.New("can't access home directory")
+	ErrInvalidBuildCtxLocalMount     = errors.New("invalid buildCtx local mount dir")
+	ErrInvalidDockerfileLocalMount   = errors.New("invalid dockerfile local mount dir")
+	ErrInvalidDestinationFileOrIsDir = errors.New("invalid destination file or destination file is a directory")
 )

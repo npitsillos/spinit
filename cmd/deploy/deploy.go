@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
 )
 
 func NewDeployCommand() *cobra.Command {
@@ -17,7 +18,8 @@ func NewDeployCommand() *cobra.Command {
 	This application is a tool to generate the needed files
 	to quickly create a Cobra application.`,
 		Run: func(cmd *cobra.Command, args []string) {
-			fmt.Println(args)
+			cfg := viper.Get("config")
+			fmt.Println(cfg)
 		},
 	}
 
