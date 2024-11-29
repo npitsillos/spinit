@@ -41,7 +41,7 @@ jobs:
       - name: Set up Go
         uses: actions/setup-go@v5
         with:
-          go-version: '1.23.1'
+          go-version-file: 'go.mod'
       - name: Install dependencies
         run: |
           go install github.com/onsi/ginkgo/v2/ginkgo@v2.8.1
@@ -54,11 +54,27 @@ jobs:
     needs: build
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - name: Chekout repo
+        uses: actions/checkout@v4
+      - name: Setup vagrant
+        uses: ./.github/actions/vagrant-setup
+      - name: Vagrant Cache
+        uses: actions/cache@v4
+        with:
+          path: |
+             ~/.vagrant.d/boxes
+          key: vagrant-box-ubuntu-2404
+      - name: Vagrant Plugins
+        run: vagrant plugin install vagrant-k3s vagrant-reload vagrant-scp
+      - name: Setup buildkit
+        uses: ./.github/actions/buildkit
       - name: Set up Go
         uses: actions/setup-go@v5
         with:
-          go-version: '1.23.1'
+          go-version-file: 'go.mod'
+      - name: Make buildkit service readable
+        run: |
+          sudo chmod a+rw /run/buildkit/buildkitd.sock
       - name: Install dependencies
         run: |
           go install github.com/onsi/ginkgo/v2/ginkgo@v2.8.1

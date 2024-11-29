@@ -55,7 +55,7 @@ func NewBuildCommand() *cobra.Command {
 		RunE: func(cmd *cobra.Command, args []string) error {
 			buildOpts, err := newBuildOps(args[0], cmd.Flags())
 			cobra.CheckErr(err)
-			return build.BuildDockerImage(buildOpts)
+			return build.BuildImage(buildOpts)
 		},
 	}
 
