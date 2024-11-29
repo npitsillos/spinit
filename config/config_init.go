@@ -61,7 +61,7 @@ func InitSpinitConfig() (*Config, error) {
 	scanner.Scan()
 	sshKeyPath := scanner.Text()
 
-	cfg.SSH = sshKeyPath
+	cfg.SSHKeyPath = sshKeyPath
 
 	if err := initConfigDir(dir); err != nil {
 		return nil, err

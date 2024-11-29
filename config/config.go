@@ -12,7 +12,7 @@ import (
 
 type Config struct {
 	Nodes          []*Node `toml:"nodes"`
-	SSH            string  `toml:"ssh_key_path"`
+	SSHKeyPath     string  `toml:"ssh_key_path"`
 	ConfigFilePath string  `toml:"-"`
 }
 

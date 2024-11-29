@@ -1,0 +1,23 @@
+name: Setup Buildkit
+description: 'An action that installs and runs buildkit'
+runs:
+  using: composite
+  steps: 
+    - name: Download buildkit systemd files
+      shell: bash
+      run: |
+        curl -fsSL https://raw.githubusercontent.com/moby/buildkit/refs/heads/master/examples/systemd/system/buildkit.service > buildkit.service
+        sudo mv buildkit.service /etc/systemd/system
+        curl -fsSL https://raw.githubusercontent.com/moby/buildkit/refs/heads/master/examples/systemd/system/buildkit.socket > buildkit.socket
+        sudo mv buildkit.socket /etc/systemd/system
+    - name: Download buildkit release asset
+      shell: bash
+      run: |
+        version=$(curl -sSfL https://api.github.com/repos/moby/buildkit/releases/latest | jq -r '.tag_name')
+        wget https://github.com/moby/buildkit/releases/download/${version}/buildkit-${version}.linux-amd64.tar.gz
+        tar -xvzf buildkit-${version}.linux-amd64.tar.gz
+        sudo mv bin/buildkit /usr/local/bin
+    - name: Start builkit service
+      shell: bash
+      run: |
+        sudo systemctl start buildkit.service

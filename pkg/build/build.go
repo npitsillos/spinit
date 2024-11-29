@@ -29,7 +29,7 @@ type BuildOpt struct {
 	Dockerfile string
 }
 
-func BuildDockerImage(buildOpts *BuildOpt) error {
+func BuildImage(buildOpts *BuildOpt) error {
 	ctx := appcontext.Context()
 
 	c, err := client.New(ctx, appdefaults.Address)
