@@ -66,6 +66,8 @@ jobs:
           key: vagrant-box-ubuntu-2404
       - name: Vagrant Plugins
         run: vagrant plugin install vagrant-k3s vagrant-reload vagrant-scp
+      - name: Setup buildkit
+        uses: ./.github/actions/buildkit
       - name: Set up Go
         uses: actions/setup-go@v5
         with:
