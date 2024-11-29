@@ -74,7 +74,7 @@ jobs:
           go-version-file: 'go.mod'
       - name: Make buildkit service readable
         run: |
-          sudo chmod a+rw /run/buildkit/buildkit.sock
+          sudo chmod a+rw /run/buildkit/buildkitd.sock
       - name: Install dependencies
         run: |
           go install github.com/onsi/ginkgo/v2/ginkgo@v2.8.1
