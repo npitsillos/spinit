@@ -13,6 +13,7 @@ require (
 	github.com/spf13/pflag v1.0.5
 	github.com/spf13/viper v1.19.0
 	github.com/tonistiigi/fsutil v0.0.0-20241121093142-31cf1f437184
+	golang.org/x/crypto v0.31.0
 	golang.org/x/crypto v0.32.0
 	golang.org/x/sync v0.10.0
 	k8s.io/client-go v0.32.0
