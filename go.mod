@@ -1,6 +1,6 @@
 module github.com/npitsillos/spinit
 
-go 1.23.1
+go 1.23.6
 
 require (
 	github.com/bramvdbogaerde/go-scp v1.5.0
