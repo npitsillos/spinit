@@ -14,6 +14,7 @@ type Config struct {
 	Nodes          []*Node `toml:"nodes"`
 	SSHKeyPath     string  `toml:"ssh_key_path"`
 	ConfigFilePath string  `toml:"-"`
+	Domain         string  `toml:"domain"`
 }
 
 type Node struct {
@@ -38,7 +39,7 @@ func LoadConfig() (*Config, error) {
 		return nil, err
 	}
 
-	cfg, err := unMarshal(buf)
+	cfg, err := unMarshalConfig(buf)
 	if err != nil {
 		return nil, err
 	}
@@ -74,7 +75,7 @@ func (cfg *Config) Marshal() ([]byte, error) {
 	return b.Bytes(), nil
 }
 
-func unMarshal(buf []byte) (*Config, error) {
+func unMarshalConfig(buf []byte) (*Config, error) {
 	cfg := newConfig()
 	if err := toml.Unmarshal(buf, &cfg); err != nil {
 		var derr *toml.DecodeError
