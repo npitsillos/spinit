@@ -61,7 +61,7 @@ func (k *K8sClient) CreateNamespaceIfNotExists(namespaceName string) error {
 	return nil
 }
 
-func (k *K8sClient) CreateDeployment(name, namespace string) error {
+func (k *K8sClient) CreateDeployment(name, image, namespace string) error {
 	deployment := &appsv1.Deployment{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      name,
@@ -83,7 +83,7 @@ func (k *K8sClient) CreateDeployment(name, namespace string) error {
 					Containers: []apiv1.Container{
 						{
 							Name:            name,
-							Image:           fmt.Sprintf("docker.io/library/%s", name),
+							Image:           image,
 							ImagePullPolicy: apiv1.PullIfNotPresent,
 						},
 					},

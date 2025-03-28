@@ -11,11 +11,10 @@ import (
 	"github.com/spf13/pflag"
 )
 
-var (
+const (
 	NAME_FLAG       = "name"
 	TAG_FLAG        = "tag"
 	DOCKERFILE_FLAG = "dockerfile"
-	CONFIG_FLAG     = "config"
 )
 
 func newBuildOps(dir string, flagSet *pflag.FlagSet) (*build.BuildOpt, error) {
@@ -51,7 +50,7 @@ func NewBuildCommand() *cobra.Command {
 	buildCmd := &cobra.Command{
 		Use:     "build [WORKING_DIRECTORY]",
 		Short:   "build application image",
-		Long:    `Builds an application's Docker image and loads it in docker daemon.`,
+		Long:    `Builds an application's Docker image and saves it in a .tar file.`,
 		Args:    cobra.MaximumNArgs(1),
 		PreRunE: resolveNameAndDockerfile,
 		RunE: func(cmd *cobra.Command, args []string) error {
@@ -60,9 +59,8 @@ func NewBuildCommand() *cobra.Command {
 			err = build.BuildImage(buildOpts)
 			cobra.CheckErr(err)
 
-			configFile, _ := cmd.Flags().GetString(CONFIG_FLAG)
 			appConfig := config.NewAppConfig()
-			appConfig.SetConfigFilePath(getConfigFilePath(args[0], configFile))
+			appConfig.SetConfigFilePath(filepath.Join(args[0], config.DefaultAppConfigFile))
 			appConfig.Build = determineBuildInfo(cmd.Flags())
 			appConfig.WriteToFile()
 			return nil
@@ -72,7 +70,6 @@ func NewBuildCommand() *cobra.Command {
 	buildCmd.Flags().StringP(NAME_FLAG, "n", "", "Image name. If not passed this is resolved from the project directory.")
 	buildCmd.Flags().StringP(TAG_FLAG, "t", "latest", "Image tag")
 	buildCmd.Flags().StringP(DOCKERFILE_FLAG, "d", "", "Path to dockerfile")
-	buildCmd.Flags().StringP(CONFIG_FLAG, "c", "", "App config file")
 	return buildCmd
 }
 
@@ -97,16 +94,6 @@ func resolveNameAndDockerfile(cmd *cobra.Command, args []string) error {
 		cmd.Flags().Set(DOCKERFILE_FLAG, dockerfile)
 	}
 	return nil
-}
-
-func getConfigFilePath(workDir, configFileOverride string) string {
-
-	configFile := filepath.Join(workDir, config.DefaultAppConfigFile)
-	if configFileOverride != "" {
-		configFile = configFileOverride
-	}
-
-	return configFile
 }
 
 func determineBuildInfo(flagSet *pflag.FlagSet) *config.Build {

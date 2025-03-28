@@ -6,7 +6,7 @@ import (
 	"github.com/spf13/viper"
 )
 
-func CreateDeployment(name string, expose bool, namespace string) error {
+func CreateDeployment(appCfg *config.AppConfig, expose bool, namespace string) error {
 	k8sClient, err := k8s.GetK8SClient()
 
 	if err != nil {
@@ -15,12 +15,12 @@ func CreateDeployment(name string, expose bool, namespace string) error {
 	if err := k8sClient.CreateNamespaceIfNotExists(namespace); err != nil {
 		return err
 	}
-	if err := k8sClient.CreateDeployment(name, namespace); err != nil {
+	if err := k8sClient.CreateDeployment(appCfg.AppName, appCfg.Build.Image, namespace); err != nil {
 		return err
 	}
 
 	if expose {
-		return k8sClient.ExposeApp(name, namespace, viper.Get("config").(*config.Config).Domain)
+		return k8sClient.ExposeApp(appCfg.AppName, namespace, viper.Get("config").(*config.Config).Domain)
 	}
 	return nil
 }

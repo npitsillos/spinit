@@ -1,28 +1,33 @@
-package load
+package deploy
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"testing"
 
 	"github.com/npitsillos/spinit/config"
 	"github.com/npitsillos/spinit/pkg/build"
+	"github.com/npitsillos/spinit/pkg/deploy"
 	"github.com/npitsillos/spinit/pkg/load"
 	"github.com/npitsillos/spinit/tests/integration"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	"github.com/spf13/viper"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
-
-func Test_E2EDeployment(t *testing.T) {
-	RegisterFailHandler(Fail)
-	RunSpecs(t, "Load Test Suite")
-}
 
 var (
 	dir            string
 	kubeConfigFile string
+	appCfg         *config.AppConfig
+	k8sClient      *integration.K8sClient
 )
+
+func Test_E2EDeployment(t *testing.T) {
+	RegisterFailHandler(Fail)
+	RunSpecs(t, "Deploy Test Suite")
+}
 
 var _ = BeforeSuite(func() {
 	err := integration.CreateSSHKeyPair()
@@ -58,13 +63,33 @@ var _ = BeforeSuite(func() {
 	}
 
 	viper.Set("config", cfg)
+
+	err = load.LoadImageToNodes("sample-app.tar", []string{"server", "agent"})
+	Expect(err).To(BeNil())
+
+	appCfg = &config.AppConfig{
+		AppName: "sample-app",
+		Build: &config.Build{
+			Image:      "docker.io/library/sample-app",
+			Version:    "latest",
+			Dockerfile: "Dockerfile",
+		},
+	}
+
+	k8sClient, err = integration.GetK8SClient(kubeConfigFile)
+	Expect(err).NotTo(HaveOccurred())
 })
 
-var _ = Describe("Load image to cluster", func() {
-	When("image is loaded to the cluster", func() {
-		It("should be present in the container runtime", func() {
-			err := load.LoadImageToNodes("sample-app.tar", []string{"server", "agent"})
-			Expect(err).To(BeNil())
+var _ = Describe("Deploy app to cluster", func() {
+	When("an application is deployed to the cluster", func() {
+		It("should create the correct resources", func() {
+			err := deploy.CreateDeployment(appCfg, false, "sample-app")
+			Expect(err).NotTo(HaveOccurred())
+
+			namespace, err := k8sClient.CoreV1().Namespaces().Get(context.Background(), "sample-app", metav1.GetOptions{})
+			Expect(err).NotTo(HaveOccurred())
+			Expect(namespace).ToNot(BeNil())
+			Expect(namespace.Name).To(Equal("sample-app"))
 		})
 	})
 })

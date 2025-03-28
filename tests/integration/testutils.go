@@ -17,6 +17,8 @@ import (
 	"time"
 
 	"golang.org/x/crypto/ssh"
+	"k8s.io/client-go/kubernetes"
+	"k8s.io/client-go/tools/clientcmd"
 )
 
 var (
@@ -33,6 +35,10 @@ type NodeError struct {
 	Cmd  string
 	Node string
 	Err  error
+}
+
+type K8sClient struct {
+	*kubernetes.Clientset
 }
 
 func (ne *NodeError) Error() string {
@@ -100,6 +106,18 @@ func GenKubeConfigFile(serverName, serverIP string) (string, error) {
 		return "", err
 	}
 	return kubeConfigFile, nil
+}
+
+func GetK8SClient(kubeConfigFile string) (*K8sClient, error) {
+	config, err := clientcmd.BuildConfigFromFlags("", kubeConfigFile)
+	if err != nil {
+		return nil, err
+	}
+	clientSet, err := kubernetes.NewForConfig(config)
+	if err != nil {
+		return nil, err
+	}
+	return &K8sClient{clientSet}, nil
 }
 
 func GetJournalLogs(node string) (string, error) {
