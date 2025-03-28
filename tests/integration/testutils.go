@@ -17,6 +17,9 @@ import (
 	"time"
 
 	"golang.org/x/crypto/ssh"
+	"k8s.io/client-go/kubernetes"
+	"k8s.io/client-go/tools/clientcmd"
+	"k8s.io/client-go/util/homedir"
 )
 
 var (
@@ -33,6 +36,10 @@ type NodeError struct {
 	Cmd  string
 	Node string
 	Err  error
+}
+
+type K8sClient struct {
+	*kubernetes.Clientset
 }
 
 func (ne *NodeError) Error() string {
@@ -100,6 +107,32 @@ func GenKubeConfigFile(serverName, serverIP string) (string, error) {
 		return "", err
 	}
 	return kubeConfigFile, nil
+}
+
+func GetK8SClient(kubeConfigFile string) (*K8sClient, error) {
+	config, err := clientcmd.BuildConfigFromFlags("", kubeConfigFile)
+	if err != nil {
+		return nil, err
+	}
+	clientSet, err := kubernetes.NewForConfig(config)
+	if err != nil {
+		return nil, err
+	}
+	return &K8sClient{clientSet}, nil
+}
+
+func CopyKubeConfigFileToDefaultPath(kubeConfigFile string) error {
+	home := homedir.HomeDir()
+	kubeDir := filepath.Join(home, ".kube")
+	err := os.Mkdir(kubeDir, 0o700)
+	if err != nil {
+		return err
+	}
+	kubeConfig, err := os.ReadFile(kubeConfigFile)
+	if err != nil {
+		return err
+	}
+	return os.WriteFile(filepath.Join(kubeDir, "config"), []byte(kubeConfig), 0644)
 }
 
 func GetJournalLogs(node string) (string, error) {
