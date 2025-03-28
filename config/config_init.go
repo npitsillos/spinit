@@ -63,6 +63,11 @@ func InitSpinitConfig() (*Config, error) {
 
 	cfg.SSHKeyPath = sshKeyPath
 
+	fmt.Print("Provide the domain under which apps will be exposed: ")
+	scanner.Scan()
+	domain := scanner.Text()
+	cfg.Domain = domain
+
 	if err := initConfigDir(dir); err != nil {
 		return nil, err
 	}

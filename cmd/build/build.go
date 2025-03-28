@@ -3,6 +3,7 @@ package build
 import (
 	"path/filepath"
 
+	"github.com/npitsillos/spinit/config"
 	"github.com/npitsillos/spinit/errors"
 	helpers "github.com/npitsillos/spinit/helpers"
 	"github.com/npitsillos/spinit/pkg/build"
@@ -14,6 +15,7 @@ var (
 	NAME_FLAG       = "name"
 	TAG_FLAG        = "tag"
 	DOCKERFILE_FLAG = "dockerfile"
+	CONFIG_FLAG     = "config"
 )
 
 func newBuildOps(dir string, flagSet *pflag.FlagSet) (*build.BuildOpt, error) {
@@ -55,14 +57,22 @@ func NewBuildCommand() *cobra.Command {
 		RunE: func(cmd *cobra.Command, args []string) error {
 			buildOpts, err := newBuildOps(args[0], cmd.Flags())
 			cobra.CheckErr(err)
-			return build.BuildImage(buildOpts)
+			err = build.BuildImage(buildOpts)
+			cobra.CheckErr(err)
+
+			configFile, _ := cmd.Flags().GetString(CONFIG_FLAG)
+			appConfig := config.NewAppConfig()
+			appConfig.SetConfigFilePath(getConfigFilePath(args[0], configFile))
+			appConfig.Build = determineBuildInfo(cmd.Flags())
+			appConfig.WriteToFile()
+			return nil
 		},
 	}
 
 	buildCmd.Flags().StringP(NAME_FLAG, "n", "", "Image name. If not passed this is resolved from the project directory.")
 	buildCmd.Flags().StringP(TAG_FLAG, "t", "latest", "Image tag")
 	buildCmd.Flags().StringP(DOCKERFILE_FLAG, "d", "", "Path to dockerfile")
-
+	buildCmd.Flags().StringP(CONFIG_FLAG, "c", "", "App config file")
 	return buildCmd
 }
 
@@ -87,4 +97,26 @@ func resolveNameAndDockerfile(cmd *cobra.Command, args []string) error {
 		cmd.Flags().Set(DOCKERFILE_FLAG, dockerfile)
 	}
 	return nil
+}
+
+func getConfigFilePath(workDir, configFileOverride string) string {
+
+	configFile := filepath.Join(workDir, config.DefaultAppConfigFile)
+	if configFileOverride != "" {
+		configFile = configFileOverride
+	}
+
+	return configFile
+}
+
+func determineBuildInfo(flagSet *pflag.FlagSet) *config.Build {
+	dockerfile, _ := flagSet.GetString(DOCKERFILE_FLAG)
+	version, _ := flagSet.GetString(TAG_FLAG)
+	name, _ := flagSet.GetString(NAME_FLAG)
+
+	return &config.Build{
+		Image:      name,
+		Dockerfile: dockerfile,
+		Version:    version,
+	}
 }
