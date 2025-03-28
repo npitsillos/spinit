@@ -44,7 +44,7 @@ jobs:
           go-version-file: 'go.mod'
       - name: Install dependencies
         run: |
-          go install github.com/onsi/ginkgo/v2/ginkgo@v2.8.1
+          go install github.com/onsi/ginkgo/v2/ginkgo@v2.23.3
           go get github.com/onsi/gomega/...
           go mod tidy -v
       - name: Run unit tests

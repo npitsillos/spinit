@@ -50,6 +50,9 @@ var _ = BeforeSuite(func() {
 	kubeConfigFile, err = integration.GenKubeConfigFile("server", fmt.Sprintf("%s.%d", integration.NETWORK_PREFIX, integration.START_IP))
 	Expect(err).NotTo(HaveOccurred())
 
+	err = integration.CopyKubeConfigFileToDefaultPath(kubeConfigFile)
+	Expect(err).NotTo(HaveOccurred())
+
 	cfg := &config.Config{
 		SSHKeyPath: os.Getenv("E2E_PRIV_KEY_PATH"),
 	}

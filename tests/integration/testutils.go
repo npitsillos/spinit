@@ -120,6 +120,18 @@ func GetK8SClient(kubeConfigFile string) (*K8sClient, error) {
 	return &K8sClient{clientSet}, nil
 }
 
+func CopyKubeConfigFileToDefaultPath(kubeConfigFile string) error {
+	err := os.Mkdir(".kube", 0o700)
+	if err != nil {
+		return err
+	}
+	kubeConfig, err := os.ReadFile(kubeConfigFile)
+	if err != nil {
+		return err
+	}
+	return os.WriteFile(filepath.Join(".kube", kubeConfigFile), []byte(kubeConfig), 0644)
+}
+
 func GetJournalLogs(node string) (string, error) {
 	cmd := "journalctl -u k3s* --no-pager"
 	return RunCmdOnNode(cmd, node)
