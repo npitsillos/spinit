@@ -129,7 +129,7 @@ func CopyKubeConfigFileToDefaultPath(kubeConfigFile string) error {
 	if err != nil {
 		return err
 	}
-	return os.WriteFile(filepath.Join(".kube", kubeConfigFile), []byte(kubeConfig), 0644)
+	return os.WriteFile(filepath.Join(".kube", "config"), []byte(kubeConfig), 0644)
 }
 
 func GetJournalLogs(node string) (string, error) {
