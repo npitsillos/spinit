@@ -17,7 +17,7 @@ require (
 	github.com/tonistiigi/fsutil v0.0.0-20250113203817-b14e27f4135a
 	golang.org/x/crypto v0.37.0
 	golang.org/x/sync v0.13.0
-	k8s.io/api v0.32.3
+	k8s.io/api v0.33.4
 	k8s.io/apimachinery v0.33.4
 	k8s.io/client-go v0.32.3
 )
