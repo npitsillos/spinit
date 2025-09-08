@@ -27,7 +27,7 @@ jobs:
     steps:
     - uses: actions/checkout@v5
     - name: Set up Go
-      uses: actions/setup-go@v5
+      uses: actions/setup-go@v6
       with:
         go-version: '1.23.6'
     - name: Build
@@ -39,7 +39,7 @@ jobs:
     steps:
       - uses: actions/checkout@v5
       - name: Set up Go
-        uses: actions/setup-go@v5
+        uses: actions/setup-go@v6
         with:
           go-version-file: 'go.mod'
       - name: Install dependencies
@@ -69,7 +69,7 @@ jobs:
       - name: Setup buildkit
         uses: ./.github/actions/buildkit
       - name: Set up Go
-        uses: actions/setup-go@v5
+        uses: actions/setup-go@v6
         with:
           go-version-file: 'go.mod'
       - name: Make buildkit service readable
